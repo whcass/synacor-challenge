@@ -50,8 +50,10 @@ func (c *Computer) Push(a uint16) {
 	c.stack = append(c.stack, a)
 }
 
-func (c Computer) Pop(register int) {
-
+func (c *Computer) Pop(register int) {
+	val := c.stack[len(c.stack)-1]
+	c.stack = c.stack[:len(c.stack)-1]
+	c.SetRegisterVal(register, val)
 }
 
 func (c Computer) Run() {
@@ -74,6 +76,12 @@ func (c Computer) Run() {
 			a := c.GetVarOffset(1)
 			c.Push(a)
 			c.memoryPointer += 2
+			break
+		case "pop":
+			register := c.GetRegisterIndex(1)
+			c.Pop(register)
+			c.memoryPointer += 2
+			break
 		case "eq":
 			register := c.GetRegisterIndex(1)
 			a := c.GetVarOffset(2)
