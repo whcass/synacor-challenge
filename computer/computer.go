@@ -3,6 +3,7 @@ package computer
 import (
 	"fmt"
 	"github.com/whcass/synacor-challenge/parser"
+	"os"
 )
 
 const REGISTER_START int = 32768
@@ -93,13 +94,16 @@ func (c Computer) Run() {
 			}
 			c.memoryPointer += 4
 			break
-		case "out":
-			out := c.GetVarOffset(1)
-			fmt.Print(string(out))
-			c.memoryPointer += 2
-			break
-		case "noop":
-			c.memoryPointer++
+		case "gt":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
+			if a > b {
+				c.SetRegisterVal(register, 1)
+			} else {
+				c.SetRegisterVal(register, 0)
+			}
+			c.memoryPointer += 4
 			break
 		case "jmp":
 			c.memoryPointer = int(c.GetVarOffset(1))
@@ -131,12 +135,86 @@ func (c Computer) Run() {
 			c.SetRegisterVal(register, uint16(ans))
 			c.memoryPointer += 4
 			break
+		case "mult":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
 
-		default:
-			fmt.Print(opCode)
-			fmt.Println(" - NOT IMPLEMENTED YET")
+			ans := int(a*b) % REGISTER_START
+			c.SetRegisterVal(register, uint16(ans))
+			c.memoryPointer += 4
+			break
+		case "mod":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
+			ans := int(a%b) % REGISTER_START
+			c.SetRegisterVal(register, uint16(ans))
+			c.memoryPointer += 4
+			break
+		case "and":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
+
+			result := int(a&b) % REGISTER_START
+			c.SetRegisterVal(register, uint16(result))
+			c.memoryPointer += 4
+			break
+		case "or":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
+			result := int(a|b) % REGISTER_START
+			c.SetRegisterVal(register, uint16(result))
+			c.memoryPointer += 4
+			break
+		case "not":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			result := int(^a) % REGISTER_START
+			c.SetRegisterVal(register, uint16(result))
+			c.memoryPointer += 3
+			break
+		case "rmem":
+
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			c.SetRegisterVal(register, c.memory[a])
+			c.memoryPointer += 3
+			break
+		case "wmem":
+			index := c.GetVarOffset(1)
+			val := c.GetVarOffset(2)
+
+			c.memory[index] = val
+			c.memoryPointer += 3
+			break
+		case "call":
+			a := c.GetVarOffset(1)
+			ret := c.memoryPointer + 2
+			c.Push(uint16(ret))
+			c.memoryPointer = int(a)
+			break
+		case "ret":
+			val := c.stack[len(c.stack)-1]
+			c.stack = c.stack[:len(c.stack)-1]
+			c.memoryPointer = int(val)
+			break
+		case "out":
+			out := c.GetVarOffset(1)
+			fmt.Print(string(out))
+			c.memoryPointer += 2
+			break
+		case "noop":
 			c.memoryPointer++
 			break
+		case "in":
+			break
+		default:
+			fmt.Print("UNEXPECTED OP CODE AT - ")
+			fmt.Println(c.memoryPointer)
+			os.Exit(1)
 		}
 	}
 }
@@ -150,7 +228,7 @@ func NewComputer(program []uint16) *Computer {
 	return &Computer{
 		memory:        program,
 		registers:     [8]uint16{},
-		stack:         make([]uint16, 1),
+		stack:         []uint16{},
 		memoryPointer: 0,
 	}
 }
