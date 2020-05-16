@@ -9,7 +9,7 @@ const REGISTER_START int = 32768
 
 type Computer struct {
 	memory        []uint16
-	registers     [8]*uint16
+	registers     [8]uint16
 	stack         []uint16
 	memoryPointer int
 }
@@ -27,8 +27,14 @@ func (c Computer) GetVarOffset(offset int) uint16 {
 	return c.memory[c.memoryPointer+offset]
 }
 
+func (c Computer) GetRegisterIndex(offset int) int {
+	a := c.memory[c.memoryPointer+offset]
+	register := c.MapRegister(int(a))
+	return register
+}
+
 func (c Computer) GetRegisterVal(registerIndex int) uint16 {
-	return *c.registers[registerIndex]
+	return c.registers[registerIndex]
 }
 
 func (c Computer) MapRegister(registerVal int) int {
@@ -36,8 +42,16 @@ func (c Computer) MapRegister(registerVal int) int {
 	return register
 }
 
-func (c Computer) SetRegisterVal(register int, val uint16) {
-	*c.registers[register] = val
+func (c *Computer) SetRegisterVal(register int, val uint16) {
+	c.registers[register] = val
+}
+
+func (c *Computer) Push(a uint16) {
+	c.stack = append(c.stack, a)
+}
+
+func (c Computer) Pop(register int) {
+
 }
 
 func (c Computer) Run() {
@@ -50,11 +64,26 @@ func (c Computer) Run() {
 		case "halt":
 			return
 		case "set":
-			a := c.memory[c.memoryPointer+1]
-			register := c.MapRegister(int(a))
+			//a := c.memory[c.memoryPointer+1]
+			register := c.GetRegisterIndex(1)
 			b := c.GetVarOffset(2)
 			c.SetRegisterVal(register, b)
 			c.memoryPointer += 3
+			break
+		case "push":
+			a := c.GetVarOffset(1)
+			c.Push(a)
+			c.memoryPointer += 2
+		case "eq":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
+			if a == b {
+				c.SetRegisterVal(register, 1)
+			} else {
+				c.SetRegisterVal(register, 0)
+			}
+			c.memoryPointer += 4
 			break
 		case "out":
 			out := c.GetVarOffset(1)
@@ -72,9 +101,9 @@ func (c Computer) Run() {
 			b := int(c.GetVarOffset(2))
 			if a != 0 {
 				c.memoryPointer = b
-				break
+			} else {
+				c.memoryPointer += 3
 			}
-			c.memoryPointer += 3
 			break
 		case "jf":
 			a := c.GetVarOffset(1)
@@ -85,6 +114,16 @@ func (c Computer) Run() {
 			}
 			c.memoryPointer += 3
 			break
+		case "add":
+			register := c.GetRegisterIndex(1)
+			a := c.GetVarOffset(2)
+			b := c.GetVarOffset(3)
+
+			ans := int(a+b) % REGISTER_START
+			c.SetRegisterVal(register, uint16(ans))
+			c.memoryPointer += 4
+			break
+
 		default:
 			fmt.Print(opCode)
 			fmt.Println(" - NOT IMPLEMENTED YET")
@@ -96,14 +135,14 @@ func (c Computer) Run() {
 
 func NewComputer(program []uint16) *Computer {
 
-	var registers [8]*uint16
-	for i := 0; i < 8; i++ {
-		registers[i] = new(uint16)
-	}
+	//var registers [8]*uint16
+	//for i := 0; i < 8; i++ {
+	//	registers[i] = new(uint16)
+	//}
 	return &Computer{
 		memory:        program,
-		registers:     registers,
-		stack:         []uint16{},
+		registers:     [8]uint16{},
+		stack:         make([]uint16, 1),
 		memoryPointer: 0,
 	}
 }
