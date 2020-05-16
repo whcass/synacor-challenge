@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/whcass/synacor-challenge/parser"
+	"log"
 	"os"
 )
 
@@ -15,6 +16,8 @@ type Computer struct {
 	stack         []uint16
 	memoryPointer int
 	stdin         *bufio.Reader
+	logger        *log.Logger
+	gameStart     bool
 }
 
 func (c Computer) GetVar() uint16 {
@@ -63,7 +66,17 @@ func (c Computer) Run() {
 	//Grab OpCode
 	//Process it
 	//Update Memory Pointer
+
+	//game starts at 1798
 	for {
+		if c.gameStart {
+			c.logger.Println("BEGIN REGISTER")
+			for _, register := range c.registers {
+				c.logger.Println(register)
+			}
+			c.logger.Println("END REGISTER")
+			//c.logger.Println()
+		}
 		opCode := parser.Parse(c.GetVar())
 		switch opCode {
 		case "halt":
@@ -212,6 +225,7 @@ func (c Computer) Run() {
 			c.memoryPointer++
 			break
 		case "in":
+			c.gameStart = true
 			in, err := c.stdin.ReadByte()
 			if err != nil {
 				panic(err)
@@ -234,11 +248,18 @@ func NewComputer(program []uint16) *Computer {
 	//for i := 0; i < 8; i++ {
 	//	registers[i] = new(uint16)
 	//}
+	f, err := os.OpenFile("out.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	logger := log.New(f, "[*] ", log.LstdFlags)
 	return &Computer{
 		memory:        program,
 		registers:     [8]uint16{},
 		stack:         []uint16{},
 		memoryPointer: 0,
 		stdin:         bufio.NewReader(os.Stdin),
+		logger:        logger,
+		gameStart:     false,
 	}
 }
