@@ -1,6 +1,7 @@
 package computer
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/whcass/synacor-challenge/parser"
 	"os"
@@ -13,6 +14,7 @@ type Computer struct {
 	registers     [8]uint16
 	stack         []uint16
 	memoryPointer int
+	stdin         *bufio.Reader
 }
 
 func (c Computer) GetVar() uint16 {
@@ -210,6 +212,13 @@ func (c Computer) Run() {
 			c.memoryPointer++
 			break
 		case "in":
+			in, err := c.stdin.ReadByte()
+			if err != nil {
+				panic(err)
+			}
+			register := c.GetRegisterIndex(1)
+			c.SetRegisterVal(register, uint16(in))
+			c.memoryPointer += 2
 			break
 		default:
 			fmt.Print("UNEXPECTED OP CODE AT - ")
@@ -230,5 +239,6 @@ func NewComputer(program []uint16) *Computer {
 		registers:     [8]uint16{},
 		stack:         []uint16{},
 		memoryPointer: 0,
+		stdin:         bufio.NewReader(os.Stdin),
 	}
 }
