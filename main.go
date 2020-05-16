@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/binary"
-	"github.com/whcass/synacor-challenge/computer"
+	"github.com/whcass/synacor-challenge/parser"
 	"io"
 	"os"
 )
@@ -14,6 +14,7 @@ func main() {
 	}
 	//fmt.Println(file)
 	//temp := strings.Fields(string(file))
+
 	var program []uint16
 	for {
 		var low, high byte
@@ -34,6 +35,7 @@ func main() {
 			break
 		}
 	}
-	vm := computer.NewComputer(program)
-	vm.Run()
+	parser.ParseMemory(program)
+	//vm := computer.NewComputer(program)
+	//vm.Run()
 }
