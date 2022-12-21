@@ -3,9 +3,10 @@ package computer
 import (
 	"bufio"
 	"fmt"
-	"github.com/whcass/synacor-challenge/parser"
 	"log"
 	"os"
+
+	"github.com/whcass/synacor-challenge/parser"
 )
 
 const REGISTER_START int = 32768
@@ -75,7 +76,11 @@ func (c Computer) Run() {
 				c.logger.Println(register)
 			}
 			c.logger.Println("END REGISTER")
-			//c.logger.Println()
+			c.logger.Printf("memoryPointer: %v\r", c.memoryPointer)
+			c.logger.Println()
+			if c.GetRegisterVal(7) == 0 {
+				c.SetRegisterVal(7, 1)
+			}
 		}
 		opCode := parser.Parse(c.GetVar())
 		switch opCode {

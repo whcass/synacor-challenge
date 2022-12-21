@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/binary"
-	"github.com/whcass/synacor-challenge/parser"
 	"io"
 	"os"
+
+	"github.com/whcass/synacor-challenge/computer"
+	"github.com/whcass/synacor-challenge/parser"
 )
 
 func main() {
@@ -36,6 +38,6 @@ func main() {
 		}
 	}
 	parser.ParseMemory(program)
-	//vm := computer.NewComputer(program)
-	//vm.Run()
+	vm := computer.NewComputer(program)
+	vm.Run()
 }
